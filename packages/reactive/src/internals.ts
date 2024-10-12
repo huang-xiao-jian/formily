@@ -45,8 +45,17 @@ export const createObservable = (
   value?: any,
   shallow?: boolean
 ) => {
+  /* ==================================================== */
+  /* =========== primitives variables ========== */
+  /* ==================================================== */
   if (typeof value !== 'object') return value
+
+  /* ==================================================== */
+  /* =========== reactive proxy ========== */
+  /* ==================================================== */
+  // 入参值 value 为已实例化响应式对象时，直接返回即可
   const raw = ProxyRaw.get(value)
+  // 临界场景，响应式对象观点原始对象修正父节点
   if (!!raw) {
     const node = getDataNode(raw)
     if (!node.target) node.target = target
@@ -54,15 +63,32 @@ export const createObservable = (
     return value
   }
 
+  /* ==================================================== */
+  /* =========== 普通对象 ========== */
+  /* ==================================================== */
+  // 不支持转换的原始类型，跳过转换
   if (!isSupportObservable(value)) return value
 
+  /* ==================================================== */
+  /* =========== host shallow proxy ========== */
+  /* ==================================================== */
+  // 宿主节点 shallow proxy 场景，入参值 value 不进行转换
   if (target) {
+    // 获取宿主关联的原始对象
     const parentRaw = ProxyRaw.get(target) || target
+    // 父节点为 ShallowProxy 时，属性无需转换响应式对象
     const isShallowParent = RawShallowProxy.get(parentRaw)
-    if (isShallowParent) return value
+
+    if (isShallowParent) {
+      return value
+    }
   }
 
+  /* ==================================================== */
+  /* =========== deep observable ========== */
+  /* ==================================================== */
   buildDataTree(target, key, value)
+  // 明确创建 ShallowProxy 类型实例
   if (shallow) return createShallowProxy(value)
   if (isNormalType(value)) return createNormalProxy(value)
   if (isCollectionType(value)) return createCollectionProxy(value)

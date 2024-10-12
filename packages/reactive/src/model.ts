@@ -11,10 +11,17 @@ export function define<Target extends object = any>(
   target: Target,
   annotations?: Annotations<Target>
 ): Target {
+  // 忽略响应式宿主对象
   if (isObservable(target)) return target
+  // 忽略不支持的原始类型
   if (!isSupportObservable(target)) return target
+
+  // 宿主标记为响应式对象
   target[ObModelSymbol] = target
+
   buildDataTree(undefined, undefined, target)
+
+  // 基于注释函数处理属性
   for (const key in annotations) {
     const annotation = annotations[key]
     if (isAnnotation(annotation)) {

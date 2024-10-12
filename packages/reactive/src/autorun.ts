@@ -28,6 +28,7 @@ export const autorun = (tracker: Reaction, name = 'AutoRun') => {
         tracker()
       } finally {
         ReactionStack.pop()
+        // 执行任务阶段可能触发自身再次执行，使用变量标记去重
         reaction._boundary++
         batchEnd()
         reaction._boundary = 0
@@ -36,6 +37,8 @@ export const autorun = (tracker: Reaction, name = 'AutoRun') => {
       }
     }
   }
+
+  // formily 扩展场景：清理计算、副作用
   const cleanRefs = () => {
     reaction._memos = {
       queue: [],

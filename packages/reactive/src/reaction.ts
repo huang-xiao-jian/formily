@@ -164,6 +164,8 @@ export const suspendComputedReactions = (current: Reaction) => {
       reaction._context,
       reaction._property
     )
+
+    // 计算属性仅在下游不存在订阅时，释放订阅
     if (reactions.length === 0) {
       disposeBindingReactions(reaction)
       reaction._dirty = true
